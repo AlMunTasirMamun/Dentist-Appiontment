@@ -6,6 +6,7 @@ const {
     createAppointment,
     updateAppointment,
     deleteAppointment,
+    getMyAppointments,
     getAppointmentsByDoctor,
 } = require('../controllers/appointmentController');
 const { protect, optionalAuth } = require('../middlewares/authMiddleware');
@@ -15,6 +16,7 @@ const { authorize } = require('../middlewares/roleMiddleware');
 router.post('/', optionalAuth, createAppointment);
 
 // Protected routes
+router.get('/my', protect, authorize('client', 'doctor'), getMyAppointments);
 router.get('/', protect, getAppointments);
 router.get('/:id', protect, getAppointment);
 router.put('/:id', protect, updateAppointment);

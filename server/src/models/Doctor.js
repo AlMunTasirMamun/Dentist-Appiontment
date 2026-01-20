@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 
 const availabilitySchema = new mongoose.Schema({
     day: {
@@ -22,6 +23,11 @@ const availabilitySchema = new mongoose.Schema({
 
 const doctorSchema = new mongoose.Schema(
     {
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            required: true,
+        },
         name: {
             type: String,
             required: [true, 'Please provide doctor name'],

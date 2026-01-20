@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { getAppointments, cancelAppointment } from '@/services/appointmentService';
+import { getMyAppointments, cancelAppointment } from '@/services/appointmentService';
 import AppointmentCard from '@/components/appointments/AppointmentCard';
 import Button from '@/components/ui/Button';
 import Link from 'next/link';
@@ -35,7 +35,7 @@ export default function AppointmentsPage() {
             if (filter !== 'all') {
                 params.status = filter;
             }
-            const response = await getAppointments(params);
+            const response = await getMyAppointments(params);
             if (response.success) {
                 setAppointments(response.data);
             }

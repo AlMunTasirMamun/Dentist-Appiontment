@@ -11,9 +11,15 @@ const getAppointments = async (req, res) => {
         const { status, date, doctorId } = req.query;
         let query = {};
 
-        // If user is client, only show their appointments
+        // Admin sees all, but can filter.
+        // If non-admin hits this, it's captured by getMyAppointments or filtered here
         if (req.user.role === 'client') {
             query.patient = req.user._id;
+        } else if (req.user.role === 'doctor') {
+            const doctor = await Doctor.findOne({ user: req.user._id });
+            if (doctor) {
+                query.doctor = doctor._id;
+            }
         }
 
         // Filter by status
@@ -74,15 +80,21 @@ const getAppointment = async (req, res) => {
         }
 
         // Check authorization
-        if (
-            req.user.role !== 'admin' &&
-            appointment.patient &&
-            appointment.patient._id.toString() !== req.user._id.toString()
-        ) {
-            return res.status(403).json({
-                success: false,
-                message: 'Not authorized to view this appointment',
-            });
+        if (req.user.role === 'client') {
+            if (!appointment.patient || appointment.patient._id.toString() !== req.user._id.toString()) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Not authorized to view this appointment',
+                });
+            }
+        } else if (req.user.role === 'doctor') {
+            const doctor = await Doctor.findOne({ user: req.user._id });
+            if (!appointment.doctor || appointment.doctor._id.toString() !== doctor?._id.toString()) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Not authorized to view this appointment',
+                });
+            }
         }
 
         res.status(200).json({
@@ -231,9 +243,17 @@ const updateAppointment = async (req, res) => {
         }
 
         // Check authorization
-        const isOwner = appointment.patient &&
-            appointment.patient.toString() === req.user._id.toString();
+        let isOwner = false;
         const isAdmin = req.user.role === 'admin';
+
+        if (req.user.role === 'client') {
+            isOwner = appointment.patient &&
+                appointment.patient.toString() === req.user._id.toString();
+        } else if (req.user.role === 'doctor') {
+            const doctor = await Doctor.findOne({ user: req.user._id });
+            isOwner = appointment.doctor &&
+                appointment.doctor.toString() === doctor?._id.toString();
+        }
 
         if (!isOwner && !isAdmin) {
             return res.status(403).json({
@@ -305,9 +325,17 @@ const deleteAppointment = async (req, res) => {
         }
 
         // Check authorization
-        const isOwner = appointment.patient &&
-            appointment.patient.toString() === req.user._id.toString();
+        let isOwner = false;
         const isAdmin = req.user.role === 'admin';
+
+        if (req.user.role === 'client') {
+            isOwner = appointment.patient &&
+                appointment.patient.toString() === req.user._id.toString();
+        } else if (req.user.role === 'doctor') {
+            const doctor = await Doctor.findOne({ user: req.user._id });
+            isOwner = appointment.doctor &&
+                appointment.doctor.toString() === doctor?._id.toString();
+        }
 
         if (!isOwner && !isAdmin) {
             return res.status(403).json({
@@ -375,9 +403,43 @@ const getAppointmentsByDoctor = async (req, res) => {
     }
 };
 
+/**
+ * @desc    Get appointments for the currently logged in user (Client)
+ * @route   GET /api/appointments/my
+ * @access  Private (Client)
+ */
+const getMyAppointments = async (req, res) => {
+    try {
+        const { status } = req.query;
+        const query = { patient: req.user._id };
+
+        if (status) {
+            query.status = status;
+        }
+
+        const appointments = await Appointment.find(query)
+            .populate('doctor', 'name specialty image')
+            .sort({ date: -1, 'timeSlot.start': -1 });
+
+        res.status(200).json({
+            success: true,
+            count: appointments.length,
+            data: appointments,
+        });
+    } catch (error) {
+        console.error('Get my appointments error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error',
+            error: error.message,
+        });
+    }
+};
+
 module.exports = {
     getAppointments,
     getAppointment,
+    getMyAppointments,
     createAppointment,
     updateAppointment,
     deleteAppointment,

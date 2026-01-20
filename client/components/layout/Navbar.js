@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import Button from '../ui/Button';
 
 const Navbar = () => {
-    const { user, isAuthenticated, isAdmin, logout } = useAuth();
+    const { user, isAuthenticated, isAdmin, isDoctor, logout } = useAuth();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     const handleLogout = () => {
@@ -46,11 +46,16 @@ const Navbar = () => {
                                 </Link>
                                 {isAdmin && (
                                     <Link href="/admin" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">
-                                        Dashboard
+                                        Admin Dashboard
+                                    </Link>
+                                )}
+                                {isDoctor && (
+                                    <Link href="/doctor/dashboard" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">
+                                        Doctor Dashboard
                                     </Link>
                                 )}
                                 <div className="flex items-center space-x-4">
-                                    <Link href="/profile" className="flex items-center space-x-2 text-gray-600 hover:text-blue-600">
+                                    <Link href={isDoctor ? "/doctor/profile" : "/profile"} className="flex items-center space-x-2 text-gray-600 hover:text-blue-600">
                                         <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full flex items-center justify-center">
                                             <span className="text-white text-sm font-medium">
                                                 {user?.name?.charAt(0).toUpperCase()}
@@ -108,10 +113,15 @@ const Navbar = () => {
                                     </Link>
                                     {isAdmin && (
                                         <Link href="/admin" className="text-gray-600 hover:text-blue-600 px-2 py-2" onClick={() => setMobileMenuOpen(false)}>
-                                            Dashboard
+                                            Admin Dashboard
                                         </Link>
                                     )}
-                                    <Link href="/profile" className="text-gray-600 hover:text-blue-600 px-2 py-2" onClick={() => setMobileMenuOpen(false)}>
+                                    {isDoctor && (
+                                        <Link href="/doctor/dashboard" className="text-gray-600 hover:text-blue-600 px-2 py-2" onClick={() => setMobileMenuOpen(false)}>
+                                            Doctor Dashboard
+                                        </Link>
+                                    )}
+                                    <Link href={isDoctor ? "/doctor/profile" : "/profile"} className="text-gray-600 hover:text-blue-600 px-2 py-2" onClick={() => setMobileMenuOpen(false)}>
                                         Profile
                                     </Link>
                                     <button

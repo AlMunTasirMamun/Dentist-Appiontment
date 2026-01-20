@@ -1,5 +1,7 @@
 const Doctor = require('../models/Doctor');
+const User = require('../models/User');
 const Appointment = require('../models/Appointment');
+const { generateToken } = require('../middlewares/authMiddleware');
 const { generateTimeSlots, getDayName } = require('../utils/helpers');
 
 /**
@@ -109,7 +111,20 @@ const createDoctor = async (req, res) => {
             doctorData.image = `/uploads/doctors/${req.file.filename}`;
         }
 
-        const doctor = await Doctor.create(doctorData);
+        // Create User account first
+        const user = await User.create({
+            name: doctorData.name,
+            email: doctorData.email,
+            password: req.body.password,
+            phone: doctorData.phone,
+            role: 'doctor',
+        });
+
+        // Create Doctor linked to User
+        const doctor = await Doctor.create({
+            ...doctorData,
+            user: user._id,
+        });
 
         res.status(201).json({
             success: true,
@@ -171,6 +186,14 @@ const updateDoctor = async (req, res) => {
             runValidators: true,
         });
 
+        // Synchronize with User account if name or email changed
+        if (updateData.name || updateData.email) {
+            await User.findByIdAndUpdate(doctor.user, {
+                ...(updateData.name && { name: updateData.name }),
+                ...(updateData.email && { email: updateData.email }),
+            });
+        }
+
         res.status(200).json({
             success: true,
             message: 'Doctor updated successfully',
@@ -215,7 +238,13 @@ const deleteDoctor = async (req, res) => {
             });
         }
 
+        const userId = doctor.user;
         await Doctor.findByIdAndDelete(req.params.id);
+
+        // Also delete the associated User account
+        if (userId) {
+            await User.findByIdAndDelete(userId);
+        }
 
         res.status(200).json({
             success: true,
@@ -328,6 +357,65 @@ const getDoctorAvailability = async (req, res) => {
     }
 };
 
+/**
+ * @desc    Get current logged in doctor profile
+ * @route   GET /api/doctors/me
+ * @access  Doctor
+ */
+const getDoctorMe = async (req, res) => {
+    try {
+        const doctor = await Doctor.findOne({ user: req.user._id });
+        if (!doctor) {
+            return res.status(404).json({
+                success: false,
+                message: 'Doctor profile not found',
+            });
+        }
+        res.status(200).json({
+            success: true,
+            data: doctor,
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+/**
+ * @desc    Get appointments for logged in doctor
+ * @route   GET /api/doctors/me/appointments
+ * @access  Doctor
+ */
+const getDoctorAppointments = async (req, res) => {
+    try {
+        const doctor = await Doctor.findOne({ user: req.user._id });
+        if (!doctor) {
+            return res.status(404).json({
+                success: false,
+                message: 'Doctor profile not found',
+            });
+        }
+
+        const { status } = req.query;
+        const query = { doctor: doctor._id };
+
+        if (status && status !== 'all') {
+            query.status = status;
+        }
+
+        const appointments = await Appointment.find(query)
+            .populate('patient', 'name email phone')
+            .sort({ date: 1, 'timeSlot.start': 1 });
+
+        res.status(200).json({
+            success: true,
+            count: appointments.length,
+            data: appointments,
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
 module.exports = {
     getDoctors,
     getDoctor,
@@ -335,4 +423,6 @@ module.exports = {
     updateDoctor,
     deleteDoctor,
     getDoctorAvailability,
+    getDoctorMe,
+    getDoctorAppointments,
 };

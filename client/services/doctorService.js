@@ -126,10 +126,36 @@ export const deleteDoctor = async (id) => {
         },
     });
 
-    const data = await response.json();
-    if (!response.ok) {
-        throw new Error(data.message || 'Failed to delete doctor');
-    }
-    return data;
+};
+
+/**
+ * Get logged in doctor profile
+ */
+export const getDoctorMe = async () => {
+    const token = getToken();
+    const response = await fetch(`${API_URL}/doctors/me/profile`, {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+        },
+    });
+
+    return await response.json();
+};
+
+/**
+ * Get appointments for logged in doctor
+ */
+export const getDoctorAppointments = async (params = {}) => {
+    const token = getToken();
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = queryString ? `/doctors/me/appointments?${queryString}` : '/doctors/me/appointments';
+
+    const response = await fetch(`${API_URL}${endpoint}`, {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+        },
+    });
+
+    return await response.json();
 };
 

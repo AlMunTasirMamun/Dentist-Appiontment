@@ -1,7 +1,16 @@
 import api from './api';
 
 /**
- * Get appointments (filtered by user role on server)
+ * Get current user's appointments (Dedicated endpoint)
+ */
+export const getMyAppointments = async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = queryString ? `/appointments/my?${queryString}` : '/appointments/my';
+    return await api.get(endpoint);
+};
+
+/**
+ * Get all appointments (Admin only)
  */
 export const getAppointments = async (params = {}) => {
     const queryString = new URLSearchParams(params).toString();

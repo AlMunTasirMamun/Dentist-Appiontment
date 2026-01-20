@@ -21,6 +21,7 @@ export default function AdminDoctorsPage() {
         bio: '',
         availability: [],
         price: 0,
+        password: '',
     });
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
@@ -85,6 +86,7 @@ export default function AdminDoctorsPage() {
                     { day: 'friday', startTime: '09:00', endTime: '17:00', slotDuration: 30 },
                 ],
                 price: 0,
+                password: '',
             });
             setImagePreview(null);
         }
@@ -332,6 +334,16 @@ export default function AdminDoctorsPage() {
                             onChange={handleChange}
                             required
                         />
+                        {!editingDoctor && (
+                            <Input
+                                label="Initial Password"
+                                type="password"
+                                name="password"
+                                value={formData.password}
+                                onChange={handleChange}
+                                required
+                            />
+                        )}
                     </div>
 
                     <div>

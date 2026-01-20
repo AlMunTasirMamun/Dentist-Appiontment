@@ -38,6 +38,8 @@ export default function LoginPage() {
                 // Redirect based on role
                 if (response.data.role === 'admin') {
                     router.push('/admin');
+                } else if (response.data.role === 'doctor') {
+                    router.push('/doctor/dashboard');
                 } else {
                     router.push('/doctors');
                 }

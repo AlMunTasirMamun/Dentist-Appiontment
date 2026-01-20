@@ -88,7 +88,7 @@ const BookingForm = ({ doctor, onSuccess }) => {
                 appointmentData.guestInfo = guestInfo;
             }
 
-            // Call payment initiation instead of direct creation
+            // Initiate payment - appointment will be created after payment
             const response = await initiatePayment(appointmentData);
 
             if (response.success && response.payment_url) {
@@ -112,14 +112,14 @@ const BookingForm = ({ doctor, onSuccess }) => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Appointment Booked!</h3>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">Appointment Request Submitted!</h3>
                 <p className="text-gray-600 mb-4">
-                    Your appointment with Dr. {doctor.name} on {formatDate(selectedDate)} at {selectedSlot.start} has been confirmed.
+                    Your appointment request with Dr. {doctor.name} on {formatDate(selectedDate)} at {selectedSlot.start} is pending admin review.
                 </p>
                 <p className="text-sm text-gray-500">
                     {isAuthenticated
-                        ? 'You can view your appointments in your dashboard.'
-                        : 'A confirmation email has been sent to your email address.'}
+                        ? 'You can view your appointments in your dashboard. An admin will review your request shortly.'
+                        : 'A confirmation email will be sent once your request is approved.'}
                 </p>
             </div>
         );
