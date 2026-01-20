@@ -58,6 +58,11 @@ const doctorSchema = new mongoose.Schema(
             enum: ['active', 'inactive'],
             default: 'active',
         },
+        price: {
+            type: Number,
+            required: [true, 'Please provide consultation price'],
+            default: 0,
+        },
         createdBy: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',

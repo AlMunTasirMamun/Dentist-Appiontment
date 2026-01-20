@@ -66,6 +66,21 @@ const appointmentSchema = new mongoose.Schema(
             type: String,
             maxlength: [1000, 'Notes cannot exceed 1000 characters'],
         },
+        amount: {
+            type: Number,
+            default: 0,
+        },
+        paymentStatus: {
+            type: String,
+            enum: ['pending', 'paid', 'failed', 'cancelled'],
+            default: 'pending',
+        },
+        transactionId: {
+            type: String, // Merchant's txn ID
+        },
+        pg_txnid: {
+            type: String, // Aamarpay's txn ID
+        },
     },
     {
         timestamps: true,

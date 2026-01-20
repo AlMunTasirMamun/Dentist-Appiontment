@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getDoctorAvailability } from '@/services/doctorService';
-import { createAppointment } from '@/services/appointmentService';
+import { initiatePayment } from '@/services/paymentService';
 import { formatDateForAPI, formatDate } from '@/utils/helpers';
 import Calendar from '../ui/Calendar';
 import TimeSlotPicker from './TimeSlotPicker';
@@ -88,13 +88,14 @@ const BookingForm = ({ doctor, onSuccess }) => {
                 appointmentData.guestInfo = guestInfo;
             }
 
-            const response = await createAppointment(appointmentData);
+            // Call payment initiation instead of direct creation
+            const response = await initiatePayment(appointmentData);
 
-            if (response.success) {
-                setSuccess(true);
-                if (onSuccess) {
-                    onSuccess(response.data);
-                }
+            if (response.success && response.payment_url) {
+                // Redirect to Aamarpay payment gateway
+                window.location.href = response.payment_url;
+            } else {
+                setError('Failed to initiate payment. Please try again.');
             }
         } catch (err) {
             setError(err.message || 'Failed to book appointment');

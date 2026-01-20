@@ -1,4 +1,4 @@
-import { formatDate, formatTimeSlot, getStatusColor, capitalize } from '@/utils/helpers';
+import { formatDate, formatTimeSlot, getStatusColor, getPaymentStatusColor, capitalize } from '@/utils/helpers';
 
 const AppointmentCard = ({ appointment, onCancel, showDoctor = true }) => {
     const statusColor = getStatusColor(appointment.status);
@@ -9,7 +9,10 @@ const AppointmentCard = ({ appointment, onCancel, showDoctor = true }) => {
             <div className="flex justify-between items-start mb-4">
                 <div>
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColor}`}>
-                        {capitalize(appointment.status)}
+                        Status: {capitalize(appointment.status)}
+                    </span>
+                    <span className={`ml-2 px-3 py-1 rounded-full text-xs font-medium border ${getPaymentStatusColor(appointment.paymentStatus)}`}>
+                        Payment: {capitalize(appointment.paymentStatus || 'pending')}
                     </span>
                 </div>
                 <div className="text-right">

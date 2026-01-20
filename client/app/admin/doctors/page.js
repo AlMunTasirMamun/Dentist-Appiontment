@@ -19,8 +19,8 @@ export default function AdminDoctorsPage() {
         phone: '',
         specialty: '',
         bio: '',
-        status: 'active',
         availability: [],
+        price: 0,
     });
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
@@ -60,6 +60,7 @@ export default function AdminDoctorsPage() {
                 bio: doctor.bio || '',
                 status: doctor.status || 'active',
                 availability: doctor.availability || [],
+                price: doctor.price || 0,
             });
             // Set existing image preview
             if (doctor.image) {
@@ -83,6 +84,7 @@ export default function AdminDoctorsPage() {
                     { day: 'thursday', startTime: '09:00', endTime: '17:00', slotDuration: 30 },
                     { day: 'friday', startTime: '09:00', endTime: '17:00', slotDuration: 30 },
                 ],
+                price: 0,
             });
             setImagePreview(null);
         }
@@ -212,6 +214,7 @@ export default function AdminDoctorsPage() {
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Doctor</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Specialty</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Price</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Available Days</th>
                                 <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase">Actions</th>
                             </tr>
@@ -244,6 +247,9 @@ export default function AdminDoctorsPage() {
                                             }`}>
                                             {doctor.status}
                                         </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-sm font-semibold text-blue-600">
+                                        ৳{doctor.price || 0}
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex gap-1">
@@ -315,6 +321,14 @@ export default function AdminDoctorsPage() {
                             label="Specialty"
                             name="specialty"
                             value={formData.specialty}
+                            onChange={handleChange}
+                            required
+                        />
+                        <Input
+                            label="Consultation Price (BDT)"
+                            type="number"
+                            name="price"
+                            value={formData.price}
                             onChange={handleChange}
                             required
                         />
