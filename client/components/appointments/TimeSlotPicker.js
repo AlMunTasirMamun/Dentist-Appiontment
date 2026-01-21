@@ -35,6 +35,7 @@ const TimeSlotPicker = ({
                 return (
                     <button
                         key={index}
+                        type="button"
                         onClick={() => onSlotSelect(slot)}
                         className={`
               py-3 px-2 rounded-lg text-sm font-medium transition-all duration-200

@@ -51,6 +51,7 @@ const Calendar = ({
             {/* Navigation */}
             <div className="flex items-center justify-between mb-4">
                 <button
+                    type="button"
                     onClick={handlePrevious}
                     className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
                 >
@@ -62,6 +63,7 @@ const Calendar = ({
                     {dates[0]?.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                 </h3>
                 <button
+                    type="button"
                     onClick={handleNext}
                     className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
                 >
@@ -80,6 +82,7 @@ const Calendar = ({
                     return (
                         <button
                             key={index}
+                            type="button"
                             onClick={() => available && onDateSelect(date)}
                             disabled={!available}
                             className={`
