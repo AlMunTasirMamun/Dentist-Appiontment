@@ -11,6 +11,7 @@ export default function AdminDashboard() {
         totalDoctors: 0,
         totalAppointments: 0,
         totalUsers: 0,
+        totalMessages: 0,
         pendingAppointments: 0,
     });
     const [recentAppointments, setRecentAppointments] = useState([]);
@@ -34,10 +35,14 @@ export default function AdminDashboard() {
             // Fetch users
             const usersRes = await api.get('/users');
 
+            // Fetch messages
+            const messagesRes = await api.get('/contact');
+
             setStats({
                 totalDoctors: doctorsRes.data?.length || 0,
                 totalAppointments: appointmentsRes.data?.length || 0,
                 totalUsers: usersRes.data?.length || 0,
+                totalMessages: messagesRes.count || messagesRes.data?.length || 0,
                 pendingAppointments: pendingRes.data?.length || 0,
             });
 
@@ -71,7 +76,7 @@ export default function AdminDashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="mb-8">
                 <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-                <p className="text-gray-600 mt-1">Welcome back! Here's what's happening.</p>
+                <p className="text-gray-600 mt-1">Welcome back! Here&apos;s what&apos;s happening.</p>
             </div>
 
             {/* Stats Grid */}
@@ -120,6 +125,17 @@ export default function AdminDashboard() {
                         </svg>
                     }
                 />
+                <StatCard
+                    title="Total Messages"
+                    value={stats.totalMessages}
+                    color="border-red-500"
+                    link="/admin/messages"
+                    icon={
+                        <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                        </svg>
+                    }
+                />
             </div>
 
             {/* Quick Actions */}
@@ -142,6 +158,14 @@ export default function AdminDashboard() {
                                 </svg>
                             </div>
                             <span className="font-medium text-gray-900">Manage Appointments</span>
+                        </Link>
+                        <Link href="/admin/messages" className="flex items-center p-3 rounded-xl bg-red-50 hover:bg-red-100 transition-colors">
+                            <div className="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center mr-3">
+                                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                                </svg>
+                            </div>
+                            <span className="font-medium text-gray-900">Manage Messages</span>
                         </Link>
                     </div>
                 </div>
@@ -170,9 +194,9 @@ export default function AdminDashboard() {
                                         </p>
                                     </div>
                                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${apt.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                            apt.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                                                apt.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                                                    'bg-blue-100 text-blue-800'
+                                        apt.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                                            apt.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                                'bg-blue-100 text-blue-800'
                                         }`}>
                                         {apt.status}
                                     </span>

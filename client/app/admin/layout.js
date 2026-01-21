@@ -42,6 +42,7 @@ export default function AdminLayout({ children }) {
                             <a href="/admin/doctors" className="hover:text-blue-100">Doctors</a>
                             <a href="/admin/appointments" className="hover:text-blue-100">Appointments</a>
                             <a href="/admin/users" className="hover:text-blue-100">Users</a>
+                            <a href="/admin/messages" className="hover:text-blue-100">Messages</a>
                         </div>
                     </div>
                 </div>

@@ -3,6 +3,23 @@
 :root {
   --color-background: #f9fafb;
   --color-foreground: #111827;
+  
+  /* Teal color palette */
+  --color-teal-50: #f0fdfa;
+  --color-teal-100: #ccfbf1;
+  --color-teal-500: #14b8a6;
+  --color-teal-600: #0d9488;
+  --color-teal-700: #0f766e;
+  --color-teal-800: #115e59;
+  --color-teal-900: #134e4a;
+  
+  /* Dark teal for backgrounds */
+  --color-dark-teal: #1a3a3a;
+  --color-darker-teal: #0f2929;
+  
+  /* Orange/coral accent */
+  --color-coral: #f97316;
+  --color-coral-light: #fb923c;
 }
 
 body {
@@ -21,17 +38,25 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, #3b82f6, #06b6d4);
+  background: linear-gradient(to bottom, #0d9488, #14b8a6);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(to bottom, #2563eb, #0891b2);
+  background: linear-gradient(to bottom, #0f766e, #0d9488);
 }
 
 /* Gradient text utility */
 .gradient-text {
-  background: linear-gradient(to right, #3b82f6, #06b6d4);
+  background: linear-gradient(to right, #0d9488, #14b8a6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Teal gradient text */
+.gradient-text-teal {
+  background: linear-gradient(to right, #0d9488, #14b8a6);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -50,4 +75,27 @@ body {
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* Hero background gradient */
+.hero-gradient {
+  background: linear-gradient(135deg, #1a3a3a 0%, #0f2929 50%, #1a3a3a 100%);
+}
+
+/* Section backgrounds */
+.bg-dark-teal {
+  background-color: #1a3a3a;
+}
+
+.bg-darker-teal {
+  background-color: #0f2929;
+}
+
+/* Card shadow utilities */
+.card-shadow {
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+.card-shadow-hover:hover {
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
 }
