@@ -2,12 +2,19 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import Button from '../ui/Button';
 
 const Navbar = () => {
     const { user, isAuthenticated, isAdmin, isDoctor, logout } = useAuth();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const pathname = usePathname();
+
+    // Hide navbar on admin routes
+    if (pathname?.startsWith('/admin')) {
+        return null;
+    }
 
     const handleLogout = () => {
         logout();
@@ -61,7 +68,7 @@ const Navbar = () => {
                                                 {user?.name?.charAt(0).toUpperCase()}
                                             </span>
                                         </div>
-                                        <span className="font-medium">{user?.name}</span>
+                                        <span className="font-medium">Dashboard</span>
                                     </Link>
                                     <Button variant="ghost" size="sm" onClick={handleLogout} className="text-gray-300 hover:text-white hover:bg-slate-800">
                                         Logout

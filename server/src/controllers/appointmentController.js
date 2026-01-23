@@ -44,7 +44,7 @@ const getAppointments = async (req, res) => {
         const appointments = await Appointment.find(query)
             .populate('doctor', 'name specialty image')
             .populate('patient', 'name email phone')
-            .sort({ date: -1, 'timeSlot.start': -1 });
+            .sort({ createdAt: -1 });
 
         res.status(200).json({
             success: true,
@@ -186,7 +186,9 @@ const createAppointment = async (req, res) => {
             date: appointmentDate,
             timeSlot,
             reason,
+            amount: doctor.price || 0,
             status: 'pending',
+            paymentStatus: 'pending',
         };
 
         // Add patient or guest info
@@ -386,7 +388,7 @@ const getAppointmentsByDoctor = async (req, res) => {
         const appointments = await Appointment.find(query)
             .populate('doctor', 'name specialty')
             .populate('patient', 'name email phone')
-            .sort({ date: 1, 'timeSlot.start': 1 });
+            .sort({ createdAt: -1 });
 
         res.status(200).json({
             success: true,
@@ -419,7 +421,7 @@ const getMyAppointments = async (req, res) => {
 
         const appointments = await Appointment.find(query)
             .populate('doctor', 'name specialty image')
-            .sort({ date: -1, 'timeSlot.start': -1 });
+            .sort({ createdAt: -1 });
 
         res.status(200).json({
             success: true,
