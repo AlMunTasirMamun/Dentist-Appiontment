@@ -59,7 +59,7 @@ const appointmentSchema = new mongoose.Schema(
         },
         status: {
             type: String,
-            enum: ['pending', 'confirmed', 'cancelled', 'completed'],
+            enum: ['pending', 'confirmed', 'cancelled', 'consulted', 'completed'],
             default: 'pending',
         },
         notes: {
@@ -72,8 +72,17 @@ const appointmentSchema = new mongoose.Schema(
         },
         paymentStatus: {
             type: String,
-            enum: ['pending', 'paid', 'failed', 'cancelled'],
+            enum: ['pending', 'paid', 'failed', 'cancelled', 'refunded'],
             default: 'pending',
+        },
+        refundAmount: {
+            type: Number,
+            default: 0,
+        },
+        refundStatus: {
+            type: String,
+            enum: ['none', 'pending', 'processed'],
+            default: 'none',
         },
         transactionId: {
             type: String, // Merchant's txn ID

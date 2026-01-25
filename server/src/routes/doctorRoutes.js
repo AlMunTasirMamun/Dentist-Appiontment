@@ -7,7 +7,6 @@ const {
     updateDoctor,
     deleteDoctor,
     getDoctorAvailability,
-    doctorLogin,
     getDoctorMe,
     getDoctorAppointments,
 } = require('../controllers/doctorController');

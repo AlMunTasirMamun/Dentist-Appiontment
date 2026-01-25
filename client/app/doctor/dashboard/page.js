@@ -1,24 +1,23 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getDoctorAppointments } from '@/services/doctorService';
 import { formatDate, formatTimeSlot, getStatusColor, capitalize } from '@/utils/helpers';
 import AppointmentCard from '@/components/appointments/AppointmentCard';
+import PrescriptionModal from '@/components/doctor/PrescriptionModal';
+import ViewPrescriptionModal from '@/components/doctor/ViewPrescriptionModal';
 
 export default function DoctorDashboard() {
     const { user } = useAuth();
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
+    const [selectedAppointment, setSelectedAppointment] = useState(null);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
-    useEffect(() => {
-        if (user) {
-            fetchAppointments();
-        }
-    }, [user, filter]);
-
-    const fetchAppointments = async () => {
+    const fetchAppointments = useCallback(async () => {
         try {
             setLoading(true);
             const response = await getDoctorAppointments({ status: filter });
@@ -30,12 +29,30 @@ export default function DoctorDashboard() {
         } finally {
             setLoading(false);
         }
+    }, [filter]);
+
+    useEffect(() => {
+        if (user) {
+            fetchAppointments();
+        }
+    }, [user, fetchAppointments]);
+
+    const handlePrescribe = (appointment) => {
+        setSelectedAppointment(appointment);
+        setIsCreateModalOpen(true);
+    };
+
+    const handleViewPrescription = (appointmentId) => {
+        const apt = appointments.find(a => a._id === appointmentId);
+        setSelectedAppointment(apt);
+        setIsViewModalOpen(true);
     };
 
     const statusFilters = [
         { id: 'all', label: 'All' },
         { id: 'pending', label: 'Pending' },
         { id: 'confirmed', label: 'Confirmed' },
+        { id: 'consulted', label: 'Consulted' },
         { id: 'completed', label: 'Completed' },
     ];
 
@@ -49,12 +66,12 @@ export default function DoctorDashboard() {
                             Welcome back, <span className="font-semibold text-blue-600">Dr. {user?.name}</span>
                         </p>
                     </div>
-                    <div className="flex bg-gray-100 p-1 rounded-xl">
+                    <div className="flex bg-gray-100 p-1 rounded-xl overflow-x-auto">
                         {statusFilters.map((s) => (
                             <button
                                 key={s.id}
                                 onClick={() => setFilter(s.id)}
-                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === s.id
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${filter === s.id
                                     ? 'bg-white text-blue-600 shadow-sm'
                                     : 'text-gray-500 hover:text-gray-700'
                                     }`}
@@ -88,10 +105,28 @@ export default function DoctorDashboard() {
                         <AppointmentCard
                             key={appointment._id}
                             appointment={appointment}
-                            showDoctor={false} // Doctor already knows who they are
+                            showDoctor={false}
+                            onPrescribe={handlePrescribe}
+                            onViewPrescription={handleViewPrescription}
                         />
                     ))}
                 </div>
+            )}
+
+            {isCreateModalOpen && selectedAppointment && (
+                <PrescriptionModal
+                    appointment={selectedAppointment}
+                    onClose={() => setIsCreateModalOpen(false)}
+                    onPrescriptionCreated={fetchAppointments}
+                />
+            )}
+
+            {isViewModalOpen && selectedAppointment && (
+                <ViewPrescriptionModal
+                    appointmentId={selectedAppointment._id}
+                    patientName={selectedAppointment.patient?.name || selectedAppointment.guestInfo?.name}
+                    onClose={() => setIsViewModalOpen(false)}
+                />
             )}
         </div>
     );

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getAppointments, updateAppointment, cancelAppointment } from '@/services/appointmentService';
 import { formatDate, formatTimeSlot, getStatusColor, getPaymentStatusColor, capitalize } from '@/utils/helpers';
 import Button from '@/components/ui/Button';
@@ -10,11 +10,7 @@ export default function AdminAppointmentsPage() {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
 
-    useEffect(() => {
-        fetchAppointments();
-    }, [filter]);
-
-    const fetchAppointments = async () => {
+    const fetchAppointments = useCallback(async () => {
         try {
             setLoading(true);
             const params = {};
@@ -30,7 +26,11 @@ export default function AdminAppointmentsPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [filter]);
+
+    useEffect(() => {
+        fetchAppointments();
+    }, [fetchAppointments]);
 
     const handleStatusUpdate = async (id, newStatus) => {
         try {
@@ -62,7 +62,7 @@ export default function AdminAppointmentsPage() {
             {/* Filters */}
             <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
                 <div className="flex flex-wrap gap-2">
-                    {['all', 'pending', 'confirmed', 'completed', 'cancelled'].map((status) => (
+                    {['all', 'pending', 'confirmed', 'consulted', 'completed', 'cancelled'].map((status) => (
                         <button
                             key={status}
                             onClick={() => setFilter(status)}
@@ -84,8 +84,9 @@ export default function AdminAppointmentsPage() {
                         <span className="font-semibold text-gray-500 uppercase tracking-wider text-[10px]">Appointment Status:</span>
                         <div className="flex gap-2">
                             <span className="px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800">Pending</span>
-                            <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-800">Confirmed</span>
-                            <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">Completed</span>
+                            <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">Confirmed</span>
+                            <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800">Consulted</span>
+                            <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-800">Completed</span>
                             <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-800">Cancelled</span>
                         </div>
                     </div>
@@ -97,6 +98,7 @@ export default function AdminAppointmentsPage() {
                             <span className="px-2 py-0.5 rounded-full border border-green-200 bg-green-50 text-green-700">Paid</span>
                             <span className="px-2 py-0.5 rounded-full border border-red-200 bg-red-50 text-red-700">Failed</span>
                             <span className="px-2 py-0.5 rounded-full border border-gray-200 bg-gray-50 text-gray-600">Cancelled</span>
+                            <span className="px-2 py-0.5 rounded-full border border-purple-200 bg-purple-50 text-purple-700">Refunded</span>
                         </div>
                     </div>
                 </div>
@@ -159,6 +161,11 @@ export default function AdminAppointmentsPage() {
                                                 <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getPaymentStatusColor(apt.paymentStatus)}`}>
                                                     {capitalize(apt.paymentStatus || 'pending')}
                                                 </span>
+                                                {apt.refundAmount > 0 && (
+                                                    <p className="mt-1 text-[10px] text-purple-600 font-bold">
+                                                        Refund: BDT {apt.refundAmount} ({apt.refundStatus})
+                                                    </p>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex justify-end gap-2">
@@ -170,7 +177,7 @@ export default function AdminAppointmentsPage() {
                                                             Confirm
                                                         </button>
                                                     )}
-                                                    {apt.status === 'confirmed' && (
+                                                    {(apt.status === 'confirmed' || apt.status === 'consulted') && (
                                                         <button
                                                             onClick={() => handleStatusUpdate(apt._id, 'completed')}
                                                             className="text-blue-600 hover:text-blue-800 text-sm font-medium"

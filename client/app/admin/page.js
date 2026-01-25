@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getDoctors } from '@/services/doctorService';
-import { getAppointments } from '@/services/appointmentService';
+import { getAppointments, getRevenueStats } from '@/services/appointmentService';
 import api from '@/services/api';
 
 export default function AdminDashboard() {
@@ -13,13 +13,11 @@ export default function AdminDashboard() {
         totalUsers: 0,
         totalMessages: 0,
         pendingAppointments: 0,
+        totalRevenue: 0,
     });
+    const [revenueTimeline, setRevenueTimeline] = useState([]);
     const [recentAppointments, setRecentAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        fetchDashboardData();
-    }, []);
 
     const fetchDashboardData = async () => {
         try {
@@ -38,14 +36,20 @@ export default function AdminDashboard() {
             // Fetch messages
             const messagesRes = await api.get('/contact');
 
+            // Fetch revenue stats
+            const revenueRes = await getRevenueStats();
+            const totalRevenue = revenueRes.data?.reduce((acc, curr) => acc + curr.totalRevenue, 0) || 0;
+
             setStats({
                 totalDoctors: doctorsRes.data?.length || 0,
                 totalAppointments: appointmentsRes.data?.length || 0,
                 totalUsers: usersRes.data?.length || 0,
                 totalMessages: messagesRes.count || messagesRes.data?.length || 0,
                 pendingAppointments: pendingRes.data?.length || 0,
+                totalRevenue: totalRevenue,
             });
 
+            setRevenueTimeline(revenueRes.data || []);
             setRecentAppointments(appointmentsRes.data?.slice(0, 5) || []);
         } catch (err) {
             console.error('Error fetching dashboard data:', err);
@@ -53,6 +57,10 @@ export default function AdminDashboard() {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        fetchDashboardData();
+    }, []);
 
     const StatCard = ({ title, value, icon, color, link }) => (
         <Link href={link} className="block">
@@ -136,6 +144,35 @@ export default function AdminDashboard() {
                         </svg>
                     }
                 />
+                <StatCard
+                    title="Total Revenue (BDT)"
+                    value={stats.totalRevenue.toLocaleString()}
+                    color="border-indigo-500"
+                    link="/admin/appointments?status=completed"
+                    icon={
+                        <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    }
+                />
+            </div>
+
+            {/* Revenue Timeline */}
+            <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Revenue Timeline</h2>
+                <div className="flex flex-wrap gap-4">
+                    {revenueTimeline.length === 0 ? (
+                        <p className="text-gray-500">No revenue data available.</p>
+                    ) : (
+                        revenueTimeline.map((item, index) => (
+                            <div key={index} className="flex-1 min-w-[150px] p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                <p className="text-sm text-gray-500">{new Date(0, item._id.month - 1).toLocaleString('en', { month: 'long' })} {item._id.year}</p>
+                                <p className="text-xl font-bold text-gray-900 mt-1">BDT {item.totalRevenue.toLocaleString()}</p>
+                                <p className="text-xs text-gray-400 mt-1">{item.count} appointments</p>
+                            </div>
+                        ))
+                    )}
+                </div>
             </div>
 
             {/* Quick Actions */}

@@ -8,6 +8,7 @@ const {
     deleteAppointment,
     getMyAppointments,
     getAppointmentsByDoctor,
+    getRevenueStats,
 } = require('../controllers/appointmentController');
 const { protect, optionalAuth } = require('../middlewares/authMiddleware');
 const { authorize } = require('../middlewares/roleMiddleware');
@@ -22,7 +23,8 @@ router.get('/:id', protect, getAppointment);
 router.put('/:id', protect, updateAppointment);
 router.delete('/:id', protect, deleteAppointment);
 
-// Admin only route
+// Admin only routes
 router.get('/doctor/:doctorId', protect, authorize('admin'), getAppointmentsByDoctor);
+router.get('/stats/revenue', protect, authorize('admin'), getRevenueStats);
 
 module.exports = router;

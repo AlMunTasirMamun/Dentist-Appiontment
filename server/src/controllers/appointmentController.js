@@ -2,6 +2,23 @@ const Appointment = require('../models/Appointment');
 const Doctor = require('../models/Doctor');
 
 /**
+ * Helper to calculate refund amount based on cancellation time
+ */
+const calculateRefund = (appointmentDate, isPaid, amount) => {
+    if (!isPaid) return { refundAmount: 0, refundStatus: 'none' };
+
+    const hoursToAppointment = (new Date(appointmentDate) - new Date()) / (1000 * 60 * 60);
+
+    if (hoursToAppointment >= 24) {
+        return { refundAmount: amount, refundStatus: 'pending' }; // 100% refund
+    } else if (hoursToAppointment >= 12) {
+        return { refundAmount: amount * 0.5, refundStatus: 'pending' }; // 50% refund
+    } else {
+        return { refundAmount: 0, refundStatus: 'none' }; // 0% refund
+    }
+};
+
+/**
  * @desc    Get all appointments (filtered by role)
  * @route   GET /api/appointments
  * @access  Private
@@ -268,23 +285,35 @@ const updateAppointment = async (req, res) => {
         const { status, notes } = req.body;
         const updateData = {};
 
-        // Clients can only cancel their appointments
-        if (isOwner && !isAdmin) {
-            if (status && status !== 'cancelled') {
+        // Role-based restrictions
+        if (isAdmin) {
+            if (status) updateData.status = status;
+            if (notes !== undefined) updateData.notes = notes;
+        } else if (req.user.role === 'doctor' && isOwner) {
+            // Doctors can update status to consulted or completed, and add notes
+            if (status && ['consulted', 'completed'].includes(status)) {
+                updateData.status = status;
+            }
+            if (notes !== undefined) updateData.notes = notes;
+        } else if (req.user.role === 'client' && isOwner) {
+            // Clients can only cancel
+            if (status && status === 'cancelled') {
+                updateData.status = status;
+                if (appointment.paymentStatus === 'paid') {
+                    const { refundAmount, refundStatus } = calculateRefund(
+                        appointment.date,
+                        true,
+                        appointment.amount
+                    );
+                    updateData.refundAmount = refundAmount;
+                    updateData.refundStatus = refundStatus;
+                }
+            } else if (status && status !== 'cancelled') {
                 return res.status(403).json({
                     success: false,
                     message: 'You can only cancel your appointments',
                 });
             }
-            if (status === 'cancelled') {
-                updateData.status = status;
-            }
-        }
-
-        // Admin can update any field
-        if (isAdmin) {
-            if (status) updateData.status = status;
-            if (notes !== undefined) updateData.notes = notes;
         }
 
         appointment = await Appointment.findByIdAndUpdate(
@@ -348,6 +377,18 @@ const deleteAppointment = async (req, res) => {
 
         // Soft delete - just update status to cancelled
         appointment.status = 'cancelled';
+
+        // Add refund logic
+        if (appointment.paymentStatus === 'paid') {
+            const { refundAmount, refundStatus } = calculateRefund(
+                appointment.date,
+                true,
+                appointment.amount
+            );
+            appointment.refundAmount = refundAmount;
+            appointment.refundStatus = refundStatus;
+        }
+
         await appointment.save();
 
         res.status(200).json({
@@ -438,6 +479,47 @@ const getMyAppointments = async (req, res) => {
     }
 };
 
+/**
+ * @desc    Get revenue statistics (Admin)
+ * @route   GET /api/appointments/stats/revenue
+ * @access  Admin
+ */
+const getRevenueStats = async (req, res) => {
+    try {
+        const stats = await Appointment.aggregate([
+            {
+                $match: {
+                    status: 'completed',
+                    paymentStatus: 'paid',
+                },
+            },
+            {
+                $group: {
+                    _id: {
+                        year: { $year: '$date' },
+                        month: { $month: '$date' },
+                    },
+                    totalRevenue: { $sum: '$amount' },
+                    count: { $sum: 1 },
+                },
+            },
+            { $sort: { '_id.year': -1, '_id.month': -1 } },
+        ]);
+
+        res.status(200).json({
+            success: true,
+            data: stats,
+        });
+    } catch (error) {
+        console.error('Get revenue stats error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error',
+            error: error.message,
+        });
+    }
+};
+
 module.exports = {
     getAppointments,
     getAppointment,
@@ -446,4 +528,5 @@ module.exports = {
     updateAppointment,
     deleteAppointment,
     getAppointmentsByDoctor,
+    getRevenueStats,
 };

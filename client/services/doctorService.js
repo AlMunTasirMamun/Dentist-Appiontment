@@ -126,6 +126,11 @@ export const deleteDoctor = async (id) => {
         },
     });
 
+    const data = await response.json();
+    if (!response.ok) {
+        throw new Error(data.message || 'Failed to delete doctor');
+    }
+    return data;
 };
 
 /**

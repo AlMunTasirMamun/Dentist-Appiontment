@@ -225,20 +225,11 @@ const deleteDoctor = async (req, res) => {
             });
         }
 
-        // Check for existing appointments
-        const appointments = await Appointment.countDocuments({
-            doctor: req.params.id,
-            status: { $in: ['pending', 'confirmed'] }
-        });
-
-        if (appointments > 0) {
-            return res.status(400).json({
-                success: false,
-                message: `Cannot delete doctor with ${appointments} pending/confirmed appointments`,
-            });
-        }
-
         const userId = doctor.user;
+
+        // Delete all associated appointments
+        await Appointment.deleteMany({ doctor: req.params.id });
+
         await Doctor.findByIdAndDelete(req.params.id);
 
         // Also delete the associated User account
@@ -368,7 +359,7 @@ const getDoctorMe = async (req, res) => {
         if (!doctor) {
             return res.status(404).json({
                 success: false,
-                message: 'Doctor profile not found',
+                message: `Doctor profile not found for user ID: ${req.user._id}`,
             });
         }
         res.status(200).json({
@@ -376,6 +367,7 @@ const getDoctorMe = async (req, res) => {
             data: doctor,
         });
     } catch (error) {
+        console.error('getDoctorMe error:', error);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 };
@@ -391,9 +383,10 @@ const getDoctorAppointments = async (req, res) => {
         if (!doctor) {
             return res.status(404).json({
                 success: false,
-                message: 'Doctor profile not found',
+                message: `Doctor profile not found for user ID: ${req.user._id}`,
             });
         }
+        console.log('Found doctor for appointments:', doctor.name);
 
         const { status } = req.query;
         const query = { doctor: doctor._id };

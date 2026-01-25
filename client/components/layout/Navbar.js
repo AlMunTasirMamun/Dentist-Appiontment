@@ -51,6 +51,11 @@ const Navbar = () => {
                                 <Link href="/appointments" className="text-gray-300 hover:text-teal-400 transition-colors font-medium">
                                     Appointments
                                 </Link>
+                                {!isDoctor && !isAdmin && (
+                                    <Link href="/history" className="text-gray-300 hover:text-teal-400 transition-colors font-medium">
+                                        History
+                                    </Link>
+                                )}
                                 {isAdmin && (
                                     <Link href="/admin" className="text-gray-300 hover:text-teal-400 transition-colors font-medium">
                                         Admin
@@ -118,6 +123,11 @@ const Navbar = () => {
                                     <Link href="/appointments" className="text-gray-300 hover:text-teal-400 px-2 py-2" onClick={() => setMobileMenuOpen(false)}>
                                         Appointments
                                     </Link>
+                                    {!isDoctor && !isAdmin && (
+                                        <Link href="/history" className="text-gray-300 hover:text-teal-400 px-2 py-2" onClick={() => setMobileMenuOpen(false)}>
+                                            History
+                                        </Link>
+                                    )}
                                     {isAdmin && (
                                         <Link href="/admin" className="text-gray-300 hover:text-teal-400 px-2 py-2" onClick={() => setMobileMenuOpen(false)}>
                                             Admin

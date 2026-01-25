@@ -56,3 +56,10 @@ export const getAppointmentsByDoctor = async (doctorId, params = {}) => {
         : `/appointments/doctor/${doctorId}`;
     return await api.get(endpoint);
 };
+
+/**
+ * Get revenue statistics (Admin only)
+ */
+export const getRevenueStats = async () => {
+    return await api.get('/appointments/stats/revenue');
+};
