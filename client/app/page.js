@@ -114,7 +114,7 @@ export default function Home() {
               </div>
               <div>
                 <h3 className="font-bold text-lg">Our Location</h3>
-                <p className="text-teal-100 text-sm">Brooklyn, NY 10036, United States</p>
+                <p className="text-teal-100 text-sm">Uttara sector-10, Road:7 House :11 Dhaka-1230</p>
               </div>
             </div>
 
@@ -127,7 +127,7 @@ export default function Home() {
               </div>
               <div>
                 <h3 className="font-bold text-lg">Contact Us Now</h3>
-                <p className="text-orange-100 text-sm">+1 315 369 5943</p>
+                <p className="text-orange-100 text-sm">+880162429877</p>
               </div>
             </div>
           </div>

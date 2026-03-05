@@ -1,8 +1,13 @@
 import { formatDate, formatTimeSlot, getStatusColor, getPaymentStatusColor, capitalize } from '@/utils/helpers';
 
-const AppointmentCard = ({ appointment, onCancel, onPrescribe, onViewPrescription, onComplete, showDoctor = true }) => {
+const AppointmentCard = ({ appointment, onCancel, onPrescribe, onViewPrescription, onComplete, onRequestRefund, showDoctor = true }) => {
     const statusColor = getStatusColor(appointment.status);
     const patientInfo = appointment.patient || appointment.guestInfo;
+    
+    // Check if refund can be requested: paid appointments that are cancelled and no refund requested yet
+    const canRequestRefund = appointment.paymentStatus === 'paid' && 
+        appointment.status === 'cancelled' && 
+        (!appointment.refundStatus || appointment.refundStatus === 'none');
 
     return (
         <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-shadow">
@@ -129,7 +134,35 @@ const AppointmentCard = ({ appointment, onCancel, onPrescribe, onViewPrescriptio
                     </button>
                 )}
 
-                {appointment.refundAmount > 0 && (
+                {/* Refund Request Button */}
+                {canRequestRefund && onRequestRefund && (
+                    <button
+                        onClick={() => onRequestRefund(appointment)}
+                        className="text-purple-600 text-sm font-medium hover:text-purple-700 flex items-center gap-1"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                        </svg>
+                        Request Refund
+                    </button>
+                )}
+
+                {/* Refund Status */}
+                {appointment.refundStatus && appointment.refundStatus !== 'none' && (
+                    <div className={`w-full mt-2 p-2 rounded text-xs ${
+                        appointment.refundStatus === 'requested' ? 'bg-yellow-50 text-yellow-700' :
+                        appointment.refundStatus === 'approved' || appointment.refundStatus === 'processed' ? 'bg-green-50 text-green-700' :
+                        appointment.refundStatus === 'rejected' ? 'bg-red-50 text-red-700' :
+                        'bg-purple-50 text-purple-700'
+                    }`}>
+                        <span className="font-medium">Refund Status:</span> {appointment.refundStatus.charAt(0).toUpperCase() + appointment.refundStatus.slice(1)}
+                        {appointment.refundAmount > 0 && appointment.refundStatus === 'processed' && (
+                            <span> - BDT {appointment.refundAmount}</span>
+                        )}
+                    </div>
+                )}
+
+                {appointment.refundAmount > 0 && !appointment.refundStatus && (
                     <div className="w-full mt-2 p-2 bg-purple-50 rounded text-xs text-purple-700">
                         Refund of BDT {appointment.refundAmount} ({appointment.refundStatus})
                     </div>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { getMyAppointments, cancelAppointment } from '@/services/appointmentService';
 import AppointmentCard from '@/components/appointments/AppointmentCard';
+import ViewPrescriptionModal from '@/components/doctor/ViewPrescriptionModal';
 import Button from '@/components/ui/Button';
 import Link from 'next/link';
 
@@ -15,6 +16,8 @@ export default function AppointmentsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [filter, setFilter] = useState('all');
+    const [selectedAppointment, setSelectedAppointment] = useState(null);
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
     useEffect(() => {
         if (!authLoading && !isAuthenticated) {
@@ -57,6 +60,12 @@ export default function AppointmentsPage() {
         } catch (err) {
             alert(err.message || 'Failed to cancel appointment');
         }
+    };
+
+    const handleViewPrescription = (appointmentId) => {
+        const apt = appointments.find(a => a._id === appointmentId);
+        setSelectedAppointment(apt);
+        setIsViewModalOpen(true);
     };
 
     if (authLoading) {
@@ -165,9 +174,18 @@ export default function AppointmentsPage() {
                                 key={appointment._id}
                                 appointment={appointment}
                                 onCancel={handleCancel}
+                                onViewPrescription={handleViewPrescription}
                             />
                         ))}
                     </div>
+                )}
+
+                {isViewModalOpen && selectedAppointment && (
+                    <ViewPrescriptionModal
+                        appointmentId={selectedAppointment._id}
+                        patientName={selectedAppointment.patient?.name || user?.name}
+                        onClose={() => setIsViewModalOpen(false)}
+                    />
                 )}
             </div>
         </div>

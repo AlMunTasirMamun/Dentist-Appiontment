@@ -14,6 +14,7 @@ export default function AdminDashboard() {
         totalMessages: 0,
         pendingAppointments: 0,
         totalRevenue: 0,
+        totalRefunds: 0,
     });
     const [revenueTimeline, setRevenueTimeline] = useState([]);
     const [recentAppointments, setRecentAppointments] = useState([]);
@@ -39,6 +40,7 @@ export default function AdminDashboard() {
             // Fetch revenue stats
             const revenueRes = await getRevenueStats();
             const totalRevenue = revenueRes.data?.reduce((acc, curr) => acc + curr.totalRevenue, 0) || 0;
+            const totalRefunds = revenueRes.refundSummary?.totalRefunded || 0;
 
             setStats({
                 totalDoctors: doctorsRes.data?.length || 0,
@@ -47,6 +49,7 @@ export default function AdminDashboard() {
                 totalMessages: messagesRes.count || messagesRes.data?.length || 0,
                 pendingAppointments: pendingRes.data?.length || 0,
                 totalRevenue: totalRevenue,
+                totalRefunds: totalRefunds,
             });
 
             setRevenueTimeline(revenueRes.data || []);
@@ -155,11 +158,22 @@ export default function AdminDashboard() {
                         </svg>
                     }
                 />
+                <StatCard
+                    title="Total Refunds (BDT)"
+                    value={stats.totalRefunds.toLocaleString()}
+                    color="border-orange-500"
+                    link="/admin/refunds"
+                    icon={
+                        <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                        </svg>
+                    }
+                />
             </div>
 
             {/* Revenue Timeline */}
             <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Revenue Timeline</h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Revenue Timeline (Net after Refunds)</h2>
                 <div className="flex flex-wrap gap-4">
                     {revenueTimeline.length === 0 ? (
                         <p className="text-gray-500">No revenue data available.</p>
@@ -169,6 +183,9 @@ export default function AdminDashboard() {
                                 <p className="text-sm text-gray-500">{new Date(0, item._id.month - 1).toLocaleString('en', { month: 'long' })} {item._id.year}</p>
                                 <p className="text-xl font-bold text-gray-900 mt-1">BDT {item.totalRevenue.toLocaleString()}</p>
                                 <p className="text-xs text-gray-400 mt-1">{item.count} appointments</p>
+                                {item.totalRefunds > 0 && (
+                                    <p className="text-xs text-orange-500 mt-1">Refunds: BDT {item.totalRefunds.toLocaleString()}</p>
+                                )}
                             </div>
                         ))
                     )}

@@ -126,6 +126,7 @@ export default function DoctorDashboard() {
                     appointmentId={selectedAppointment._id}
                     patientName={selectedAppointment.patient?.name || selectedAppointment.guestInfo?.name}
                     onClose={() => setIsViewModalOpen(false)}
+                    onPrescriptionUpdated={fetchAppointments}
                 />
             )}
         </div>

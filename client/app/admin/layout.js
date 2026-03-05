@@ -1,18 +1,39 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+import { getPendingRefundCount } from '@/services/refundService';
 
 export default function AdminLayout({ children }) {
     const router = useRouter();
     const { user, loading, isAuthenticated, isAdmin, logout } = useAuth();
+    const [pendingRefunds, setPendingRefunds] = useState(0);
 
     const handleLogout = () => {
         logout();
         router.push('/');
     };
+
+    // Fetch pending refund count
+    useEffect(() => {
+        const fetchPendingCount = async () => {
+            if (isAdmin) {
+                try {
+                    const data = await getPendingRefundCount();
+                    setPendingRefunds(data.count || 0);
+                } catch (err) {
+                    console.error('Failed to fetch pending refunds:', err);
+                }
+            }
+        };
+
+        fetchPendingCount();
+        // Poll every 30 seconds
+        const interval = setInterval(fetchPendingCount, 30000);
+        return () => clearInterval(interval);
+    }, [isAdmin]);
 
     useEffect(() => {
         if (!loading) {
@@ -49,6 +70,14 @@ export default function AdminLayout({ children }) {
                             <Link href="/admin/appointments" className="hover:text-blue-100">Appointments</Link>
                             <Link href="/admin/users" className="hover:text-blue-100">Users</Link>
                             <Link href="/admin/messages" className="hover:text-blue-100">Messages</Link>
+                            <Link href="/admin/refunds" className="hover:text-blue-100 relative">
+                                Refunds
+                                {pendingRefunds > 0 && (
+                                    <span className="absolute -top-2 -right-3 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold animate-pulse">
+                                        {pendingRefunds > 9 ? '9+' : pendingRefunds}
+                                    </span>
+                                )}
+                            </Link>
                             <span className="text-blue-200">|</span>
                             <Link href="/" className="hover:text-blue-100 flex items-center space-x-1">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -47,6 +47,10 @@ const prescriptionSchema = new mongoose.Schema(
             type: String,
             trim: true,
         },
+        prescriptionFile: {
+            type: String,
+            default: null,
+        },
     },
     {
         timestamps: true,

@@ -81,14 +81,27 @@ const appointmentSchema = new mongoose.Schema(
         },
         refundStatus: {
             type: String,
-            enum: ['none', 'pending', 'processed'],
+            enum: ['none', 'requested', 'pending', 'approved', 'rejected', 'processed'],
             default: 'none',
+        },
+        refundRequest: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'RefundRequest',
         },
         transactionId: {
             type: String, // Merchant's txn ID
         },
         pg_txnid: {
             type: String, // Aamarpay's txn ID
+        },
+        paymentDetails: {
+            pg_txnid: String,
+            cardType: String,
+            cardNumber: String, // Last 4 digits
+            customerName: String,
+            customerEmail: String,
+            customerPhone: String,
+            paymentMethod: String,
         },
     },
     {

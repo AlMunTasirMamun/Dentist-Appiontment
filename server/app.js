@@ -10,6 +10,7 @@ const appointmentRoutes = require('./src/routes/appointmentRoutes');
 const paymentRoutes = require('./src/routes/paymentRoutes');
 const contactRoutes = require('./src/routes/contactRoutes');
 const prescriptionRoutes = require('./src/routes/prescriptionRoutes');
+const refundRoutes = require('./src/routes/refundRoutes');
 
 // Initialize express app
 const app = express();
@@ -45,6 +46,7 @@ app.use('/api/appointments', appointmentRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/prescriptions', prescriptionRoutes);
+app.use('/api/refunds', refundRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {

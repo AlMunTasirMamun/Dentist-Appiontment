@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
 /**
  * Get auth token from localStorage
@@ -59,6 +59,42 @@ export const api = {
     }),
 
     delete: (endpoint) => apiFetch(endpoint, { method: 'DELETE' }),
+
+    postFormData: async (endpoint, formData) => {
+        const token = getToken();
+        const headers = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        const response = await fetch(`${API_URL}${endpoint}`, {
+            method: 'POST',
+            headers,
+            body: formData,
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.message || 'Something went wrong');
+        }
+        return data;
+    },
+
+    putFormData: async (endpoint, formData) => {
+        const token = getToken();
+        const headers = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        const response = await fetch(`${API_URL}${endpoint}`, {
+            method: 'PUT',
+            headers,
+            body: formData,
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.message || 'Something went wrong');
+        }
+        return data;
+    },
 };
 
 export default api;

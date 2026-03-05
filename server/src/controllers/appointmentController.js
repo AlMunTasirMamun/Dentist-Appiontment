@@ -1,21 +1,15 @@
 const Appointment = require('../models/Appointment');
 const Doctor = require('../models/Doctor');
+const RefundRequest = require('../models/RefundRequest');
 
 /**
- * Helper to calculate refund amount based on cancellation time
+ * Helper to calculate refund amount - always 50% refund
  */
 const calculateRefund = (appointmentDate, isPaid, amount) => {
     if (!isPaid) return { refundAmount: 0, refundStatus: 'none' };
 
-    const hoursToAppointment = (new Date(appointmentDate) - new Date()) / (1000 * 60 * 60);
-
-    if (hoursToAppointment >= 24) {
-        return { refundAmount: amount, refundStatus: 'pending' }; // 100% refund
-    } else if (hoursToAppointment >= 12) {
-        return { refundAmount: amount * 0.5, refundStatus: 'pending' }; // 50% refund
-    } else {
-        return { refundAmount: 0, refundStatus: 'none' }; // 0% refund
-    }
+    // Always 50% refund
+    return { refundAmount: amount * 0.5, refundStatus: 'pending' };
 };
 
 /**
@@ -306,7 +300,38 @@ const updateAppointment = async (req, res) => {
                         appointment.amount
                     );
                     updateData.refundAmount = refundAmount;
-                    updateData.refundStatus = refundStatus;
+                    updateData.refundStatus = refundStatus === 'pending' ? 'requested' : refundStatus;
+
+                    // Auto-create refund request if there's a refund amount
+                    if (refundAmount > 0 && appointment.patient) {
+                        try {
+                            const existingRefund = await RefundRequest.findOne({ appointment: appointment._id });
+                            
+                            if (!existingRefund) {
+                                await RefundRequest.create({
+                                    appointment: appointment._id,
+                                    patient: appointment.patient,
+                                    reason: 'Appointment cancelled by patient',
+                                    originalAmount: appointment.amount,
+                                    refundAmount: refundAmount,
+                                    refundPercentage: Math.round((refundAmount / appointment.amount) * 100),
+                                    status: 'pending',
+                                    transactionId: appointment.transactionId || null,
+                                    paymentMethod: appointment.paymentDetails?.paymentMethod || 'Online Payment',
+                                    paymentDetails: {
+                                        pg_txnid: appointment.pg_txnid || appointment.paymentDetails?.pg_txnid,
+                                        cardType: appointment.paymentDetails?.cardType,
+                                        cardNumber: appointment.paymentDetails?.cardNumber,
+                                        customerName: appointment.paymentDetails?.customerName,
+                                        customerEmail: appointment.paymentDetails?.customerEmail,
+                                        customerPhone: appointment.paymentDetails?.customerPhone,
+                                    },
+                                });
+                            }
+                        } catch (refundError) {
+                            console.error('Error creating auto refund request:', refundError);
+                        }
+                    }
                 }
             } else if (status && status !== 'cancelled') {
                 return res.status(403).json({
@@ -378,7 +403,7 @@ const deleteAppointment = async (req, res) => {
         // Soft delete - just update status to cancelled
         appointment.status = 'cancelled';
 
-        // Add refund logic
+        // Add refund logic and auto-create refund request for paid appointments
         if (appointment.paymentStatus === 'paid') {
             const { refundAmount, refundStatus } = calculateRefund(
                 appointment.date,
@@ -386,7 +411,40 @@ const deleteAppointment = async (req, res) => {
                 appointment.amount
             );
             appointment.refundAmount = refundAmount;
-            appointment.refundStatus = refundStatus;
+            appointment.refundStatus = refundStatus === 'pending' ? 'requested' : refundStatus;
+
+            // Auto-create refund request if there's a refund amount
+            if (refundAmount > 0 && appointment.patient) {
+                try {
+                    // Check if refund request already exists
+                    const existingRefund = await RefundRequest.findOne({ appointment: appointment._id });
+                    
+                    if (!existingRefund) {
+                        await RefundRequest.create({
+                            appointment: appointment._id,
+                            patient: appointment.patient,
+                            reason: 'Appointment cancelled by patient',
+                            originalAmount: appointment.amount,
+                            refundAmount: refundAmount,
+                            refundPercentage: Math.round((refundAmount / appointment.amount) * 100),
+                            status: 'pending',
+                            transactionId: appointment.transactionId || null,
+                            paymentMethod: appointment.paymentDetails?.paymentMethod || 'Online Payment',
+                            paymentDetails: {
+                                pg_txnid: appointment.pg_txnid || appointment.paymentDetails?.pg_txnid,
+                                cardType: appointment.paymentDetails?.cardType,
+                                cardNumber: appointment.paymentDetails?.cardNumber,
+                                customerName: appointment.paymentDetails?.customerName,
+                                customerEmail: appointment.paymentDetails?.customerEmail,
+                                customerPhone: appointment.paymentDetails?.customerPhone,
+                            },
+                        });
+                    }
+                } catch (refundError) {
+                    console.error('Error creating auto refund request:', refundError);
+                    // Continue with appointment cancellation even if refund request fails
+                }
+            }
         }
 
         await appointment.save();
@@ -486,11 +544,11 @@ const getMyAppointments = async (req, res) => {
  */
 const getRevenueStats = async (req, res) => {
     try {
-        const stats = await Appointment.aggregate([
+        // Get all paid appointments (including refunded ones)
+        const revenueStats = await Appointment.aggregate([
             {
                 $match: {
-                    status: 'completed',
-                    paymentStatus: 'paid',
+                    paymentStatus: { $in: ['paid', 'refunded'] },
                 },
             },
             {
@@ -499,16 +557,52 @@ const getRevenueStats = async (req, res) => {
                         year: { $year: '$date' },
                         month: { $month: '$date' },
                     },
-                    totalRevenue: { $sum: '$amount' },
+                    grossRevenue: { $sum: '$amount' },
+                    totalRefunds: {
+                        $sum: {
+                            $cond: [
+                                { $eq: ['$refundStatus', 'processed'] },
+                                { $ifNull: ['$refundAmount', 0] },
+                                0
+                            ]
+                        }
+                    },
                     count: { $sum: 1 },
                 },
+            },
+            {
+                $project: {
+                    _id: 1,
+                    grossRevenue: 1,
+                    totalRefunds: 1,
+                    totalRevenue: { $subtract: ['$grossRevenue', '$totalRefunds'] },
+                    count: 1,
+                }
             },
             { $sort: { '_id.year': -1, '_id.month': -1 } },
         ]);
 
+        // Get total refund amount from all processed refunds
+        const refundStats = await Appointment.aggregate([
+            {
+                $match: {
+                    refundStatus: 'processed',
+                    refundAmount: { $gt: 0 },
+                },
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalRefunded: { $sum: '$refundAmount' },
+                    refundCount: { $sum: 1 },
+                },
+            },
+        ]);
+
         res.status(200).json({
             success: true,
-            data: stats,
+            data: revenueStats,
+            refundSummary: refundStats[0] || { totalRefunded: 0, refundCount: 0 },
         });
     } catch (error) {
         console.error('Get revenue stats error:', error);

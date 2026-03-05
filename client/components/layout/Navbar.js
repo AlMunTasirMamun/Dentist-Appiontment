@@ -4,12 +4,16 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useNotification } from '@/context/NotificationContext';
 import Button from '../ui/Button';
 
 const Navbar = () => {
     const { user, isAuthenticated, isAdmin, isDoctor, logout } = useAuth();
+    const { notifications } = useNotification();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const pathname = usePathname();
+
+    const unreadCount = notifications.length;
 
     // Hide navbar on admin routes
     if (pathname?.startsWith('/admin')) {
@@ -56,6 +60,11 @@ const Navbar = () => {
                                         History
                                     </Link>
                                 )}
+                                {!isDoctor && !isAdmin && (
+                                    <Link href="/refunds" className="text-gray-300 hover:text-teal-400 transition-colors font-medium">
+                                        My Refunds
+                                    </Link>
+                                )}
                                 {isAdmin && (
                                     <Link href="/admin" className="text-gray-300 hover:text-teal-400 transition-colors font-medium">
                                         Admin
@@ -67,6 +76,19 @@ const Navbar = () => {
                                     </Link>
                                 )}
                                 <div className="flex items-center space-x-4">
+                                    {/* Notification Bell for Patients */}
+                                    {!isDoctor && !isAdmin && (
+                                        <Link href="/history" className="relative p-2 text-gray-300 hover:text-teal-400 transition-colors">
+                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                            </svg>
+                                            {unreadCount > 0 && (
+                                                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold animate-pulse">
+                                                    {unreadCount > 9 ? '9+' : unreadCount}
+                                                </span>
+                                            )}
+                                        </Link>
+                                    )}
                                     <Link href={isDoctor ? "/doctor/profile" : "/profile"} className="flex items-center space-x-2 text-gray-300 hover:text-teal-400">
                                         <div className="w-8 h-8 bg-gradient-to-r from-teal-500 to-teal-400 rounded-full flex items-center justify-center">
                                             <span className="text-white text-sm font-medium">
@@ -126,6 +148,11 @@ const Navbar = () => {
                                     {!isDoctor && !isAdmin && (
                                         <Link href="/history" className="text-gray-300 hover:text-teal-400 px-2 py-2" onClick={() => setMobileMenuOpen(false)}>
                                             History
+                                        </Link>
+                                    )}
+                                    {!isDoctor && !isAdmin && (
+                                        <Link href="/refunds" className="text-gray-300 hover:text-teal-400 px-2 py-2" onClick={() => setMobileMenuOpen(false)}>
+                                            My Refunds
                                         </Link>
                                     )}
                                     {isAdmin && (

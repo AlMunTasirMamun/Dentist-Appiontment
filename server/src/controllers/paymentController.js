@@ -101,7 +101,7 @@ const paymentCallback = async (req, res) => {
     try {
         const { status } = req.params;
         const { transactionId } = req.query;
-        const { pg_txnid, pay_status } = req.body;
+        const { pg_txnid, pay_status, card_type, card_no, cus_name, cus_email, cus_phone } = req.body;
 
         const appointment = await Appointment.findOne({ transactionId });
         if (!appointment) {
@@ -116,6 +116,16 @@ const paymentCallback = async (req, res) => {
                 appointment.paymentStatus = 'paid';
                 appointment.status = 'confirmed';
                 appointment.pg_txnid = pg_txnid;
+                // Store payment details for refund processing
+                appointment.paymentDetails = {
+                    pg_txnid: pg_txnid,
+                    cardType: card_type || verified.data?.card_type,
+                    cardNumber: card_no || verified.data?.card_no, // Last 4 digits
+                    customerName: cus_name || verified.data?.cus_name,
+                    customerEmail: cus_email || verified.data?.cus_email,
+                    customerPhone: cus_phone || verified.data?.cus_phone,
+                    paymentMethod: card_type || verified.data?.card_type || 'Online Payment',
+                };
                 await appointment.save();
                 return res.redirect(`${process.env.CLIENT_URL}/payment/success?transactionId=${transactionId}`);
             }
