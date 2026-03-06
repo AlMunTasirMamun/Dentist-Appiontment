@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api'||'https://dentist-appointment-production.up.railway.app/api';
 
 /**
  * Get auth token from localStorage
